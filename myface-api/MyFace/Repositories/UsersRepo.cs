@@ -6,6 +6,7 @@ using MyFace.Data;
 using MyFace.Models.Database;
 using MyFace.Models.Request;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
 
@@ -19,15 +20,35 @@ namespace MyFace.Repositories
         User Create(CreateUserRequest newUser);
         User Update(int id, UpdateUserRequest update);
         void Delete(int id);
+        Task<User> Authenticate(string username, string password);
     }
     
     public class UsersRepo : IUsersRepo
     {
         private readonly MyFaceDbContext _context;
 
+        private List<User> _users = new List<User>
+        {
+            new User
+            {
+                Id = 1, FirstName = "Test", LastName = "User", Username = "testuser", HashedPassword = "testpassword"
+            }
+        };
+
         public UsersRepo(MyFaceDbContext context)
         {
             _context = context;
+        }
+
+        public async Task<User> Authenticate(string username, string password)
+        {
+            var user = await Task.Run(() =>
+                _users.SingleOrDefault(x => x.Username == username && x.HashedPassword == password));
+
+            if (user == null)
+                return null;
+
+            return user;
         }
         
         public IEnumerable<User> Search(SearchRequest search)
