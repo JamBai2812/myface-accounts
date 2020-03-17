@@ -16,10 +16,6 @@ namespace MyFace.Models.Database
         public string Email { get; set; }
         public string ProfileImageUrl { get; set; }
         public string CoverImageUrl { get; set; }
-        
-        //For random generator only
-        public string Password { get; set; }
-        //
         public string HashedPassword { get; set; }
         public string Salt { get; set; }
         public ICollection<Post> Posts { get; set; } = new List<Post>();

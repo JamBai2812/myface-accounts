@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Identity;
 using MyFace.Models.Database;
 using MyFace.Repositories;
+using RandomNumberGenerator = System.Security.Cryptography.RandomNumberGenerator;
+
 
 namespace MyFace.Data
 {
     public static class SampleUsers
     {
         public static int NumberOfUsers = 100;
-        
+
         private static IList<IList<string>> _data = new List<IList<string>>
         {
             new List<string> { "Kania", "Placido", "kplacido0", "kplacido0@qq.com" },
@@ -122,21 +125,53 @@ namespace MyFace.Data
         }
         
         
-        //Already have this exact method in Users Repo, would be good to use that instead to avoid code duplication.
-        public static string StaticHashPassword(string password, string salt)
+       
+       
+        
+        public static string GenerateRandomPassword(int size = 15, string allowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890")
         {
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: password,
-                salt: Convert.FromBase64String(salt),
-                prf: KeyDerivationPrf.HMACSHA1,
-                iterationCount: 5000,
-                numBytesRequested: 256 / 8));
+            char[] chars = allowedCharacters.ToCharArray();
+            var crypto = System.Security.Cryptography.RandomNumberGenerator.Create();
 
-            return hashed;
+            byte[] data = new byte[size];
+            crypto.GetBytes(data);
+
+            var result = new StringBuilder(size);
+
+            foreach (byte b in data) {
+                result.Append(chars[b % (chars.Length - 1)]);
+            }
+            return result.ToString();
+        }
+         //Already have these exact methods in Users Repo, would be good to use that instead to avoid code duplication.
+        public static string StaticHashPassword(string password, string salt)
+                 {
+                     string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                         password: password,
+                         salt: Convert.FromBase64String(salt),
+                         prf: KeyDerivationPrf.HMACSHA1,
+                         iterationCount: 5000,
+                         numBytesRequested: 256 / 8));
+         
+                     return hashed;
+                 }
+        
+        public static string StaticGenerateSalt()
+        {
+            byte[] saltBytes = new byte[128 / 8];
+            using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(saltBytes);
+            }
+            string salt = Convert.ToBase64String(saltBytes);
+            return salt;
+
         }
 
         private static User CreateRandomUser(int index)
         {
+            string generatedPassword = GenerateRandomPassword();
+            string generatedSalt = StaticGenerateSalt();
             return new User
             {
                 FirstName = _data[index][0],
@@ -145,9 +180,8 @@ namespace MyFace.Data
                 Email = _data[index][3],
                 ProfileImageUrl = ImageGenerator.GetProfileImage(_data[index][2]),
                 CoverImageUrl = ImageGenerator.GetCoverImage(index),
-                Salt = "s4lt",
-                Password = "pswrd",
-                HashedPassword = StaticHashPassword("pswrd", "s4lt")
+                Salt = generatedSalt,
+                HashedPassword = StaticHashPassword(generatedPassword, generatedSalt)
             };
         }
     }
