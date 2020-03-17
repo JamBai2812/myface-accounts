@@ -1,6 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.AspNetCore.Identity;
 using MyFace.Models.Database;
+using MyFace.Repositories;
 
 namespace MyFace.Data
 {
@@ -116,6 +120,20 @@ namespace MyFace.Data
         {
             return Enumerable.Range(0, NumberOfUsers).Select(CreateRandomUser);
         }
+        
+        
+        //Already have this exact method in Users Repo, would be good to use that instead to avoid code duplication.
+        public static string StaticHashPassword(string password, string salt)
+        {
+            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: password,
+                salt: Convert.FromBase64String(salt),
+                prf: KeyDerivationPrf.HMACSHA1,
+                iterationCount: 5000,
+                numBytesRequested: 256 / 8));
+
+            return hashed;
+        }
 
         private static User CreateRandomUser(int index)
         {
@@ -127,6 +145,9 @@ namespace MyFace.Data
                 Email = _data[index][3],
                 ProfileImageUrl = ImageGenerator.GetProfileImage(_data[index][2]),
                 CoverImageUrl = ImageGenerator.GetCoverImage(index),
+                Salt = "s4lt",
+                Password = "pswrd",
+                HashedPassword = StaticHashPassword("pswrd", "s4lt")
             };
         }
     }
