@@ -180,6 +180,7 @@ namespace MyFace.Data
                 Email = _data[index][3],
                 ProfileImageUrl = ImageGenerator.GetProfileImage(_data[index][2]),
                 CoverImageUrl = ImageGenerator.GetCoverImage(index),
+                Password = generatedPassword,
                 Salt = generatedSalt,
                 HashedPassword = StaticHashPassword(generatedPassword, generatedSalt)
             };

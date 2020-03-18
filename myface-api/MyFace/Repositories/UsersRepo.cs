@@ -40,14 +40,25 @@ namespace MyFace.Repositories
             _context = context;
         }
 
+        // public async Task<User> Authenticate(string username, string password)
+        // {
+        //     var user = await Task.Run(() =>
+        //         _users.SingleOrDefault(x => x.Username == username && x.HashedPassword == password));
+        //
+        //     if (user == null)
+        //         return null;
+        //
+        //     return user;
+        // }
+        
         public async Task<User> Authenticate(string username, string password)
         {
             var user = await Task.Run(() =>
-                _users.SingleOrDefault(x => x.Username == username && x.HashedPassword == password));
-
+                _context.Users.ToList().SingleOrDefault(x => x.Username == username && x.HashedPassword == HashPassword(password, x.Salt)));
+        
             if (user == null)
                 return null;
-
+        
             return user;
         }
         
